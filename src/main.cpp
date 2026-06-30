@@ -1,12 +1,17 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cstdlib>
+#include <sstream>
+#include <filesystem>
+#include <unistd.h>
+#include <algorithm>
 
 int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf; 
-  std::vector<std::string> arr = {"echo" , "type" , "exit"};
+  std::vector<std::string> builtins = {"echo" , "type" , "exit"};
 
   // REPL
   while(1){
@@ -40,16 +45,34 @@ int main() {
       std::cout<<args<<std::endl;
     }
     else if(command == "type"){
-      bool found=false;
-      for(auto &x : arr){
-        if(args == x){
-          found=true;
-          std::cout<<x<<" is a shell builtin"<<std::endl;
-          break;
-        }
+      if(std::find(builtins.begin(),builtins.end(),args)!=builtins.end()){
+        std::cout<<args<<" is a shell builtin"<<std::endl;
       }
-      if(!found){
-        std::cout<<args<<": not found"<<std::endl;
+      else{
+        bool found=false;
+        char* env = std::getenv("PATH");
+        if(env != nullptr){
+            std::string path = env;
+        }
+        std::string path=getenv("PATH");
+        std::stringstream ss(path);
+        std::string dir;
+
+        #ifdef _WIN32
+        const char delimiter = ';';
+        #else
+        const char delimiter = ':';
+        #endif
+        while(std::getline(ss,dir,delimiter)){
+          std::filesystem::path pathStr = std::filesystem::path(dir)/args;
+          if(std::filesystem::exists(pathStr)){
+            if(access(pathStr.string().c_str(), X_OK) == 0){
+              found=true;
+              std::cout<<args<<" is "<<pathStr<<std::endl;
+            }
+          }
+        }
+        if(!found) std::cout<<args<<": not found"<<std::endl;
       }
     }
     else{
