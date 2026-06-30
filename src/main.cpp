@@ -68,7 +68,7 @@ int main() {
           if(std::filesystem::exists(pathStr)){
             if(access(pathStr.string().c_str(), X_OK) == 0){
               found=true;
-              std::cout<<args<<" is "<<pathStr<<std::endl;
+              std::cout<<args<<" is "<<pathStr.string()<<std::endl;
             }
           }
         }
