@@ -70,6 +70,7 @@ int main() {
             if(access(pathStr.string().c_str(), X_OK) == 0){
               found=true;
               std::cout<<args<<" is "<<pathStr.string()<<std::endl;
+              break;
             }
           }
         }
