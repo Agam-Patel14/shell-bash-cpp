@@ -51,10 +51,11 @@ int main() {
       else{
         bool found=false;
         char* env = std::getenv("PATH");
-        if(env != nullptr){
-            std::string path = env;
+        if(env == nullptr){
+            std::cout<<args<<": not found"<<std::endl;
+            continue;
         }
-        std::string path=getenv("PATH");
+        std::string path = env;
         std::stringstream ss(path);
         std::string dir;
 
