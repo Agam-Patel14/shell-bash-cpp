@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <algorithm>
 #include <unistd.h>
+#include <sys/wait.h>
 
 std::vector<std::string> parseArgs(std::string &line){
   std::vector<std::string> args;
@@ -129,10 +130,10 @@ int main() {
         std::string dir;
 
         while(std::getline(ss,dir,':')){
-          std::filesystem::path pathStr = std::filesystem::path(dir)/args[0];
-          if(access(pathStr.string().c_str(), X_OK) == 0){
+          std::string pathStr = dir+"/"+args[0];
+          if(access(pathStr.c_str(),X_OK) == 0){
               found = true;
-              std::cout<<args[0]<<" is "<<pathStr.string()<<std::endl;
+              std::cout<<args[0]<<" is "<<pathStr<<std::endl;
               break;
           }
         }
@@ -140,26 +141,27 @@ int main() {
       }
     }
     else{
-      bool found = false;
-      // char* env = std::getenv("PATH");
-      // if(env == nullptr){
-      //     std::cout<<args<<": not found"<<std::endl;
-      //     continue;
-      // }
-      // std::string path = env;
-      // std::stringstream ss(path);
-      // std::string dir;
+      // bool found=false;
+      std::vector<const char*> argsc;
+      argsc.push_back(command.c_str());
+      for(auto &x : args){
+        argsc.push_back(x.c_str());
+      } 
+      argsc.push_back(nullptr);
 
-      // while(std::getline(ss,dir,':')){
-      //   std::filesystem::path pathStr = std::filesystem::path(dir)/args;
-      //   if(access(pathStr.string().c_str(), X_OK) == 0){
-      //       found = true;
-      //       // std::cout<<args<<" is "<<pathStr.string()<<std::endl;
-      //       break;
-      //   }
-      // }
-      if(!found) std::cout<<line<<": not found"<<std::endl;
-      
+      pid_t pid = fork();
+      if(pid==0){
+        execvp(command.c_str() , const_cast<char**>(argsc.data()));
+        std::cerr<<line<<": not found"<<std::endl;
+        exit(1);
+      }
+      else if(pid>0){
+        int status;
+        waitpid(pid,&status,0);
+      }
+      else{
+        std::cerr<<"fork failed"<<std::endl;
+      }
     }
   }
 }
