@@ -4,8 +4,8 @@
 #include <cstdlib>
 #include <sstream>
 #include <filesystem>
-#include <unistd.h>
 #include <algorithm>
+#include <unistd.h>
 
 int main() {
   // Flush after every std::cout / std:cerr
@@ -59,19 +59,12 @@ int main() {
         std::stringstream ss(path);
         std::string dir;
 
-        #ifdef _WIN32
-        const char delimiter = ';';
-        #else
-        const char delimiter = ':';
-        #endif
-        while(std::getline(ss,dir,delimiter)){
+        while(std::getline(ss,dir,':')){
           std::filesystem::path pathStr = std::filesystem::path(dir)/args;
-          if(std::filesystem::exists(pathStr)){
-            if(access(pathStr.string().c_str(), X_OK) == 0){
-              found=true;
+          if(access(pathStr.string().c_str(), X_OK) == 0){
+              found = true;
               std::cout<<args<<" is "<<pathStr.string()<<std::endl;
               break;
-            }
           }
         }
         if(!found) std::cout<<args<<": not found"<<std::endl;
