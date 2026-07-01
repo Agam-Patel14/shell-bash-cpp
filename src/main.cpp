@@ -18,7 +18,7 @@ struct parsedCommand {
   bool appendStdout = false;
   bool appendStderr = false;
   std::string outputFile;
-  std::string errorFile
+  std::string errorFile;
 };
 
 std::vector<std::string> parseArgs(std::string &line){
@@ -166,7 +166,7 @@ int main() {
     if(isBuitin && input.redirectStderr){
       savederr = dup(STDERR_FILENO);
       if(savederr == -1) continue;
-      if(!redirectStderr(STDERR_FILENO,input.errorFile)){
+      if(!redirectFd(STDERR_FILENO,input.errorFile)){
         close(savederr);
         continue;
       }
