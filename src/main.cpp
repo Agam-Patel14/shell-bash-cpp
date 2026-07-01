@@ -79,7 +79,7 @@ int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf; 
-  std::vector<std::string> builtins = {"echo" , "type" , "exit"};
+  std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd"};
 
   // REPL
   while(1){
@@ -110,6 +110,10 @@ int main() {
         std::cout<<args[i];
       }
       std::cout<<std::endl;
+      continue;
+    }
+    else if(command == "pwd"){
+      std::cout<<std::filesystem::current_path().string()<<std::endl;
     }
     else if(command == "type"){
       if(args.size()==0){
