@@ -9,6 +9,8 @@
 #include <sys/wait.h>
 #include <system_error>
 #include <fcntl.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 struct parsedCommand {
   std::string command;
@@ -107,17 +109,45 @@ bool redirectFd(int fileno , const std::string &file , bool append){
   return true;
 }
 
+char* builtin_generator(const char* text, int state) {
+  static int index;
+  static const char* commands[] = {"echo" , "exit" , "type" , "pwd" , "cd" , nullptr};
+
+  if(!state) index=0;
+  while(commands[index]){
+    const char* cmd = commands[index++];
+    if(strncmp(cmd,text,strlen(text)) == 0){
+      return strdup(cmd);
+    }
+  }
+  return nullptr;
+}
+
+char** builtin_completion(const char* text, int start, int end) {
+  if(start != 0){
+    return nullptr;
+  }
+  return rl_completion_matches(text,builtin_generator);
+}
+
 int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf; 
   std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd" , "cd"};
 
+  rl_attempted_completion_function = builtin_completion;
   // REPL
   while(1){
-    std::cout<<"$ ";
-    std::string line;
-    std::getline(std::cin,line);
+    // std::cout<<"$ ";
+    char* userInput = readline("$ ");
+
+    if(!userInput) break;
+    std::string line(userInput);
+    if(!line.empty()){
+      add_history(userInput);
+    }
+    free(userInput);
 
     // if the line is empty
     if(line.empty()){
