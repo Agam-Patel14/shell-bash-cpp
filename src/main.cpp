@@ -129,7 +129,7 @@ int main() {
       }
       std::error_code ec;
       std::filesystem::current_path(path,ec);
-      if(ec) std::cout<<line<<": No such file or directory"<<std::endl;
+      if(ec) std::cout<<command<<":"<<line.substr(2)<<": No such file or directory"<<std::endl;
     }
     else if(command == "type"){
       if(args.size()==0){
