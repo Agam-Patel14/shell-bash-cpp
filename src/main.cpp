@@ -8,6 +8,14 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <system_error>
+#include <fcntl.h>
+
+struct parsedCommand {
+  std::string command;
+  std::vector<std::string> args;
+  bool redirectStdout = false;
+  std::string outputFile;
+};
 
 std::vector<std::string> parseArgs(std::string &line){
   std::vector<std::string> args;
@@ -76,6 +84,23 @@ std::vector<std::string> parseArgs(std::string &line){
   return args;
 }
 
+bool redirectStdout(const std::string &file){
+  int fd = open(file.c_str(),O_WRONLY | O_CREAT | O_TRUNC ,0644);
+
+  if(fd == -1){
+    perror("open");
+    return false;
+  }
+
+  if(dup2(fd, STDOUT_FILENO) == -1){
+    perror("dup2");
+    close(fd);
+    return false;
+  }
+  close(fd);
+  return true;
+}
+
 int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
@@ -98,79 +123,114 @@ int main() {
     if(arguments.empty()){
       continue;
     }
-    std::string command = arguments[0];
-    std::vector<std::string> args(arguments.begin()+1,arguments.end());
+    parsedCommand input;
+    input.command = arguments[0];
+    for(int i=1 ; i<arguments.size() ; i++){
+      if(arguments[i] == ">" || arguments[i] == "1>"){
+        if(i+1<arguments.size()){
+          input.outputFile = arguments[i+1];
+          input.redirectStdout = true;
+          i++;
+        }
+      }
+      else{
+        input.args.push_back(arguments[i]);
+      }
+    }
 
+    bool isBuitin = std::find(builtins.begin(),builtins.end(),input.command)!=builtins.end();
 
     /*
      * <-----------------------------------COMMMANDS----------------------------------------->
      */
 
-    if(command == "exit"){
+    int saved = -1;
+    if(isBuitin && input.redirectStdout){
+      saved = dup(STDOUT_FILENO);
+      if(saved == -1) continue;
+      if(!redirectStdout(input.outputFile)){
+        close(saved);
+        continue;
+      }
+    }
+
+    if(input.command == "exit"){
       break;
     }
-    else if(command == "echo"){
-      for(int i=0;i<args.size();i++){
+    else if(input.command == "echo"){
+      for(int i=0;i<input.args.size();i++){
         if(i) std::cout<<" ";
-        std::cout<<args[i];
+        std::cout<<input.args[i];
       }
       std::cout<<std::endl;
     }
-    else if(command == "pwd"){
+    else if(input.command == "pwd"){
       std::cout<<std::filesystem::current_path().string()<<std::endl;
     }
-    else if(command == "cd"){
-      if(args.size() == 0){
-        continue;
+    else if(input.command == "cd"){
+      if(input.args.size() == 0){
+        // continue;
       }
-      std::string path = args[0];
-      if(path == "~"){
-        path = getenv("HOME");
-      }
-      std::error_code ec;
-      std::filesystem::current_path(path,ec);
-      if(ec) std::cout<<command<<":"<<line.substr(2)<<": No such file or directory"<<std::endl;
-    }
-    else if(command == "type"){
-      if(args.size()==0){
-        continue;
-      }
-      if(std::find(builtins.begin(),builtins.end(),args[0])!=builtins.end()){
-        std::cout<<args[0]<<" is a shell builtin"<<std::endl;
+      else if(input.args.size()>2){
+        std::cout<<"cd: too many arguments"<<std::endl;
       }
       else{
-        bool found = false;
-        char* env = std::getenv("PATH");
-        if(env == nullptr){
-            std::cout<<args[0]<<": not found"<<std::endl;
-            continue;
+        std::string path = input.args[0];
+        if(path == "~"){
+          path = getenv("HOME");
         }
-        std::string path = env;
-        std::stringstream ss(path);
-        std::string dir;
+        std::error_code ec;
+        std::filesystem::current_path(path,ec);
+        if(ec) std::cout<<input.command<<":"<<line.substr(2)<<": No such file or directory"<<std::endl;
+      }
+    }
+    else if(input.command == "type"){
+      if(input.args.size()!=0){
+        int numArgs = input.args.size();
+        for(int i=0 ; i<numArgs ; i++){
+          if(std::find(builtins.begin(),builtins.end(),input.args[i])!=builtins.end()){
+            std::cout<<input.args[i]<<" is a shell builtin"<<std::endl;
+          }
+          else{
+            bool found = false;
+            char* env = std::getenv("PATH");
+            if(env == nullptr){
+                std::cout<<input.args[i]<<": not found"<<std::endl;
+                continue;
+            }
+            std::string path = env;
+            std::stringstream ss(path);
+            std::string dir;
 
-        while(std::getline(ss,dir,':')){
-          std::string pathStr = dir+"/"+args[0];
-          if(access(pathStr.c_str(),X_OK) == 0){
-              found = true;
-              std::cout<<args[0]<<" is "<<pathStr<<std::endl;
-              break;
+            while(std::getline(ss,dir,':')){
+              std::string pathStr = dir+"/"+input.args[i];
+              if(access(pathStr.c_str(),X_OK) == 0){
+                  found = true;
+                  std::cout<<input.args[i]<<" is "<<pathStr<<std::endl;
+                  break;
+              }
+            }
+            if(!found) std::cout<<input.args[i]<<": not found"<<std::endl;
           }
         }
-        if(!found) std::cout<<args[0]<<": not found"<<std::endl;
-      }
+      }  
     }
     else{
       std::vector<const char*> argsc;
-      argsc.push_back(command.c_str());
-      for(auto &x : args){
+      argsc.push_back(input.command.c_str());
+      for(auto &x : input.args){
         argsc.push_back(x.c_str());
       } 
       argsc.push_back(nullptr);
 
       pid_t pid = fork();
       if(pid==0){
-        execvp(command.c_str() , const_cast<char**>(argsc.data()));
+        if(input.redirectStdout){
+          if(!redirectStdout(input.outputFile)){
+            exit(1);
+          }
+        }
+        execvp(input.command.c_str() , const_cast<char**>(argsc.data()));
         std::cerr<<line<<": not found"<<std::endl;
         exit(1);
       }
@@ -181,6 +241,13 @@ int main() {
       else{
         std::cerr<<"fork failed"<<std::endl;
       }
+    }
+
+    if(isBuitin && input.redirectStdout){
+      if(dup2(saved, STDOUT_FILENO) == -1){
+        perror("dup2");
+      }
+      close(saved);
     }
   }
 }
