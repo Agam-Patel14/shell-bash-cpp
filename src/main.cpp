@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <system_error>
 
 std::vector<std::string> parseArgs(std::string &line){
   std::vector<std::string> args;
@@ -79,7 +80,7 @@ int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf; 
-  std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd"};
+  std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd" , "cd"};
 
   // REPL
   while(1){
@@ -94,8 +95,12 @@ int main() {
 
     // reading the command and the args
     std::vector<std::string> arguments=parseArgs(line);
+    if(arguments.empty()){
+      continue;
+    }
     std::string command = arguments[0];
     std::vector<std::string> args(arguments.begin()+1,arguments.end());
+
 
     /*
      * <-----------------------------------COMMMANDS----------------------------------------->
@@ -110,10 +115,21 @@ int main() {
         std::cout<<args[i];
       }
       std::cout<<std::endl;
-      continue;
     }
     else if(command == "pwd"){
       std::cout<<std::filesystem::current_path().string()<<std::endl;
+    }
+    else if(command == "cd"){
+      if(args.size() == 0){
+        continue;
+      }
+      std::string path = args[0];
+      if(path == "~"){
+        path = getenv("HOME");
+      }
+      std::error_code ec;
+      std::filesystem::current_path(path,ec);
+      if(ec) std::cout<<line<<": No such file or directory"<<std::endl;
     }
     else if(command == "type"){
       if(args.size()==0){
@@ -145,7 +161,6 @@ int main() {
       }
     }
     else{
-      // bool found=false;
       std::vector<const char*> argsc;
       argsc.push_back(command.c_str());
       for(auto &x : args){
