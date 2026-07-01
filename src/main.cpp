@@ -88,8 +88,11 @@ std::vector<std::string> parseArgs(std::string &line){
   return args;
 }
 
-bool redirectFd(int fileno , const std::string &file){
-  int fd = open(file.c_str(),O_WRONLY | O_CREAT | O_TRUNC ,0644);
+bool redirectFd(int fileno , const std::string &file , bool append){
+  int flag =  O_WRONLY | O_CREAT;
+  if(append) flag |= O_APPEND;
+  else flag |= O_TRUNC;
+  int fd = open(file.c_str(),flag,0644);
 
   if(fd == -1){
     perror("open");
@@ -143,6 +146,22 @@ int main() {
           i++;
         }
       }
+      else if(arguments[i] == ">>" || arguments[i] == "1>>"){
+        if(i+1<arguments.size()){
+          input.outputFile = arguments[i+1];
+          input.appendStdout = true;
+          input.redirectStdout = true;
+          i++;
+        }
+      }
+      else if(arguments[i] == "2>>"){
+        if(i+1<arguments.size()){
+          input.errorFile = arguments[i+1];
+          input.appendStderr = true;
+          input.redirectStderr = true;
+          i++;
+        }
+      }
       else{
         input.args.push_back(arguments[i]);
       }
@@ -158,7 +177,7 @@ int main() {
     if(isBuitin && input.redirectStdout){
       savedout = dup(STDOUT_FILENO);
       if(savedout == -1) continue;
-      if(!redirectFd(STDOUT_FILENO,input.outputFile)){
+      if(!redirectFd(STDOUT_FILENO,input.outputFile,input.appendStdout)){
         close(savedout);
         continue;
       }
@@ -166,7 +185,7 @@ int main() {
     if(isBuitin && input.redirectStderr){
       savederr = dup(STDERR_FILENO);
       if(savederr == -1) continue;
-      if(!redirectFd(STDERR_FILENO,input.errorFile)){
+      if(!redirectFd(STDERR_FILENO,input.errorFile,input.appendStderr)){
         close(savederr);
         continue;
       }
@@ -244,12 +263,12 @@ int main() {
       pid_t pid = fork();
       if(pid==0){
         if(input.redirectStdout){
-          if(!redirectFd(STDOUT_FILENO,input.outputFile)){
+          if(!redirectFd(STDOUT_FILENO,input.outputFile,input.appendStdout)){
             exit(1);
           }
         }
         if(input.redirectStderr){
-          if(!redirectFd(STDERR_FILENO,input.errorFile)){
+          if(!redirectFd(STDERR_FILENO,input.errorFile,input.appendStderr)){
             exit(1);
           }
         }
