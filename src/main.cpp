@@ -14,7 +14,11 @@ struct parsedCommand {
   std::string command;
   std::vector<std::string> args;
   bool redirectStdout = false;
+  bool redirectStderr = false;
+  bool appendStdout = false;
+  bool appendStderr = false;
   std::string outputFile;
+  std::string errorFile
 };
 
 std::vector<std::string> parseArgs(std::string &line){
@@ -84,15 +88,14 @@ std::vector<std::string> parseArgs(std::string &line){
   return args;
 }
 
-bool redirectStdout(const std::string &file){
+bool redirectFd(int fileno , const std::string &file){
   int fd = open(file.c_str(),O_WRONLY | O_CREAT | O_TRUNC ,0644);
 
   if(fd == -1){
     perror("open");
     return false;
   }
-
-  if(dup2(fd, STDOUT_FILENO) == -1){
+  if(dup2(fd, fileno) == -1){
     perror("dup2");
     close(fd);
     return false;
@@ -133,6 +136,13 @@ int main() {
           i++;
         }
       }
+      else if(arguments[i] == "2>"){
+        if(i+1<arguments.size()){
+          input.errorFile = arguments[i+1];
+          input.redirectStderr = true;
+          i++;
+        }
+      }
       else{
         input.args.push_back(arguments[i]);
       }
@@ -144,12 +154,20 @@ int main() {
      * <-----------------------------------COMMMANDS----------------------------------------->
      */
 
-    int saved = -1;
+    int savedout = -1 , savederr = -1;
     if(isBuitin && input.redirectStdout){
-      saved = dup(STDOUT_FILENO);
-      if(saved == -1) continue;
-      if(!redirectStdout(input.outputFile)){
-        close(saved);
+      savedout = dup(STDOUT_FILENO);
+      if(savedout == -1) continue;
+      if(!redirectFd(STDOUT_FILENO,input.outputFile)){
+        close(savedout);
+        continue;
+      }
+    }
+    if(isBuitin && input.redirectStderr){
+      savederr = dup(STDERR_FILENO);
+      if(savederr == -1) continue;
+      if(!redirectStderr(STDERR_FILENO,input.errorFile)){
+        close(savederr);
         continue;
       }
     }
@@ -226,7 +244,12 @@ int main() {
       pid_t pid = fork();
       if(pid==0){
         if(input.redirectStdout){
-          if(!redirectStdout(input.outputFile)){
+          if(!redirectFd(STDOUT_FILENO,input.outputFile)){
+            exit(1);
+          }
+        }
+        if(input.redirectStderr){
+          if(!redirectFd(STDERR_FILENO,input.errorFile)){
             exit(1);
           }
         }
@@ -244,10 +267,16 @@ int main() {
     }
 
     if(isBuitin && input.redirectStdout){
-      if(dup2(saved, STDOUT_FILENO) == -1){
+      if(dup2(savedout,STDOUT_FILENO) == -1){
         perror("dup2");
       }
-      close(saved);
+      close(savedout);
+    }
+    if(isBuitin && input.redirectStderr){
+      if(dup2(savederr,STDERR_FILENO) == -1){
+        perror("dup2");
+      }
+      close(savederr);
     }
   }
 }
