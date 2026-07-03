@@ -118,16 +118,16 @@ std::vector<std::string> getPathExecutables(){
   std::stringstream ss(path);
   std::string dir;
   
-  while(std::getline(ss, dir, ':')){
+  while(std::getline(ss,dir,':')){
     if(dir.empty()) continue;
     try{
       for(const auto& entry : std::filesystem::directory_iterator(dir)){
-        if(entry.is_regular_file()) {
+        // if(entry.is_regular_file()) {
           std::string pathStr = entry.path().string();
-          if(access(pathStr.c_str(), X_OK) == 0) {
+          if(access(pathStr.c_str(),X_OK) == 0) {
             executables.push_back(entry.path().filename().string());
           }
-        }
+        // }
       }
     } 
     catch(...){
