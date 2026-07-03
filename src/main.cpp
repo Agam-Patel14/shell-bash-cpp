@@ -122,12 +122,10 @@ std::vector<std::string> getPathExecutables(){
     if(dir.empty()) continue;
     try{
       for(const auto& entry : std::filesystem::directory_iterator(dir)){
-        // if(entry.is_regular_file()) {
-          std::string pathStr = entry.path().string();
-          if(access(pathStr.c_str(),X_OK) == 0) {
-            executables.push_back(entry.path().filename().string());
-          }
-        // }
+        std::string pathStr = entry.path().string();
+        if(access(pathStr.c_str(),X_OK) == 0) {
+          executables.push_back(entry.path().filename().string());
+        }
       }
     } 
     catch(...){
@@ -159,10 +157,10 @@ char* commandGenerator(const char* text , int state){
   
   while(ix < commands.size()){
     const char* cmd = commands[ix].c_str();
+    ix++;
     if(strncmp(cmd,text,strlen(text)) == 0){
       return strdup(cmd);
     }
-    ix++;
   }
   return nullptr;
 }
