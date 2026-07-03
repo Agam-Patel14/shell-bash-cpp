@@ -226,14 +226,15 @@ char** commandCompletion(const char* text , int start , int end){
   if(buffer.empty()){
     return nullptr;
   }
-  std::vector<std::string> args = parseArgs(buffer.substr(0,rl_point));
+  std::string parsedLine = buffer.substr(0,rl_point);
+  std::vector<std::string> args = parseArgs(parsedLine);
   if(args.empty()) return nullptr;
   if(completionsList.find(args[0]) == completionsList.end()) return nullptr;
 
   std::string candidate = runCompleterScript(completionsList[args[0]]);
-  if(candidate.empty()) return nullptr
+  if(candidate.empty()) return nullptr;
   std::string completion = candidate + " ";
-  
+
   char** matches = static_cast<char**>(malloc(sizeof(char*)*2));
   matches[0] = strdup(completion.c_str());
   matches[1] = nullptr;
