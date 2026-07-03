@@ -109,25 +109,69 @@ bool redirectFd(int fileno , const std::string &file , bool append){
   return true;
 }
 
-char* builtin_generator(const char* text, int state) {
-  static int index;
-  static const char* commands[] = {"echo" , "exit" , "type" , "pwd" , "cd" , nullptr};
+std::vector<std::string> getPathExecutables(){
+  std::vector<std::string> executables;
+  char* env = std::getenv("PATH");
+  if(env == nullptr) return executables;
+  
+  std::string path = env;
+  std::stringstream ss(path);
+  std::string dir;
+  
+  while(std::getline(ss, dir, ':')){
+    if(dir.empty()) continue;
+    try{
+      for(const auto& entry : std::filesystem::directory_iterator(dir)){
+        if(entry.is_regular_file()) {
+          std::string pathStr = entry.path().string();
+          if(access(pathStr.c_str(), X_OK) == 0) {
+            executables.push_back(entry.path().filename().string());
+          }
+        }
+      }
+    } 
+    catch(...){
+      continue;
+    }
+  }
 
-  if(!state) index=0;
-  while(commands[index]){
-    const char* cmd = commands[index++];
+  return executables;
+}
+
+std::vector<std::string> getAllCommands(){
+  std::vector<std::string> commands = {"echo" , "exit" , "type" , "pwd" , "cd"};
+  std::vector<std::string> path_executables = getPathExecutables();
+  commands.insert(commands.end(),path_executables.begin(),path_executables.end());
+  
+  std::sort(commands.begin(),commands.end());
+  commands.erase(std::unique(commands.begin(),commands.end()),commands.end());  
+  return commands;
+}
+
+char* commandGenerator(const char* text , int state){
+  static int ix;
+  static std::vector<std::string> commands;
+  
+  if(!state){
+    ix=0;
+    commands = getAllCommands();
+  }
+  
+  while(ix < commands.size()){
+    const char* cmd = commands[ix].c_str();
     if(strncmp(cmd,text,strlen(text)) == 0){
       return strdup(cmd);
     }
+    ix++;
   }
   return nullptr;
 }
 
-char** builtin_completion(const char* text, int start, int end) {
+char** commandCompletion(const char* text , int start , int end){
   if(start != 0){
     return nullptr;
   }
-  return rl_completion_matches(text,builtin_generator);
+  return rl_completion_matches(text,commandGenerator);
 }
 
 int main() {
@@ -136,10 +180,9 @@ int main() {
   std::cerr << std::unitbuf; 
   std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd" , "cd"};
 
-  rl_attempted_completion_function = builtin_completion;
+  rl_attempted_completion_function = commandCompletion;
   // REPL
   while(1){
-    // std::cout<<"$ ";
     char* userInput = readline("$ ");
 
     if(!userInput) break;
