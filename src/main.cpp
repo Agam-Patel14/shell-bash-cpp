@@ -233,7 +233,7 @@ char** commandCompletion(const char* text , int start , int end){
 
   std::string candidate = runCompleterScript(completionsList[args[0]]);
   if(candidate.empty()) return nullptr;
-  std::string completion = candidate + " ";
+  std::string completion = candidate;
 
   char** matches = static_cast<char**>(malloc(sizeof(char*)*2));
   matches[0] = strdup(completion.c_str());
