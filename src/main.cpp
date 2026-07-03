@@ -292,6 +292,11 @@ int main() {
         if(ec) std::cout<<input.command<<":"<<line.substr(2)<<": No such file or directory"<<std::endl;
       }
     }
+    else if(input.command == "complete"){
+      if(input.args[0] == "-p"){
+        std::cout<<"complete: "<<input.args[1]<<": no complete specification"<<std::endl;
+      }
+    }
     else if(input.command == "type"){
       if(input.args.size()!=0){
         int numArgs = input.args.size();
