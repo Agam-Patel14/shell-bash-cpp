@@ -294,7 +294,7 @@ int main() {
     }
     else if(input.command == "complete"){
       if(input.args[0] == "-p"){
-        std::cout<<"complete: "<<input.args[1]<<": no complete specification"<<std::endl;
+        std::cout<<"complete: "<<input.args[1]<<": no completion specification"<<std::endl;
       }
     }
     else if(input.command == "type"){
