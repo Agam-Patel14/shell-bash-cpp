@@ -5,6 +5,8 @@
 #include <sstream>
 #include <filesystem>
 #include <algorithm>
+#include <cctype>
+#include <cstring>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <system_error>
@@ -23,6 +25,8 @@ struct parsedCommand {
   std::string outputFile;
   std::string errorFile;
 };
+
+std::map<std::string,std::string> completionsList;
 
 std::vector<std::string> parseArgs(std::string &line){
   std::vector<std::string> args;
@@ -166,11 +170,74 @@ char* commandGenerator(const char* text , int state){
   return nullptr;
 }
 
+std::string runCompleterScript(const std::string &scriptPath){
+  int pipefd[2];
+  if(pipe(pipefd) == -1){
+    perror("pipe");
+    return "";
+  }
+
+  pid_t pid = fork();
+  if(pid == 0){
+    close(pipefd[0]);
+    if(dup2(pipefd[1],STDOUT_FILENO) == -1){
+      _exit(1);
+    }
+    close(pipefd[1]);
+    char* const argv[] = {const_cast<char*>(scriptPath.c_str()),nullptr};
+    execv(scriptPath.c_str(),argv);
+    _exit(1);
+  }
+
+  if(pid < 0){
+    perror("fork");
+    close(pipefd[0]);
+    close(pipefd[1]);
+    return "";
+  }
+
+  close(pipefd[1]);
+  std::string output;
+  char buffer[4096];
+  ssize_t bytesRead = 0;
+  while((bytesRead = read(pipefd[0],buffer,sizeof(buffer))) > 0){
+    output.append(buffer,bytesRead);
+  }
+  close(pipefd[0]);
+
+  int status = 0;
+  waitpid(pid,&status,0);
+  if(!WIFEXITED(status) || WEXITSTATUS(status) != 0){
+    return "";
+  }
+
+  std::stringstream ss(output);
+  std::string line;
+  std::getline(ss,line);
+  return line;
+}
+
 char** commandCompletion(const char* text , int start , int end){
-  if(start != 0){
+  if(start == 0){
+    return rl_completion_matches(text,commandGenerator);
+  }
+
+  std::string buffer = rl_line_buffer;
+  if(buffer.empty()){
     return nullptr;
   }
-  return rl_completion_matches(text,commandGenerator);
+  std::vector<std::string> args = parseArgs(buffer.substr(0,rl_point));
+  if(args.empty()) return nullptr;
+  if(completionsList.find(args[0]) == completionsList.end()) return nullptr;
+
+  std::string candidate = runCompleterScript(completionsList[args[0]]);
+  if(candidate.empty()) return nullptr
+  std::string completion = candidate + " ";
+  
+  char** matches = static_cast<char**>(malloc(sizeof(char*)*2));
+  matches[0] = strdup(completion.c_str());
+  matches[1] = nullptr;
+  return matches;
 }
 
 int main() {
@@ -178,7 +245,6 @@ int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf; 
   std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd" , "cd" , "complete"};
-  std::map<std::string,std::string> completionsList;
 
   rl_attempted_completion_function = commandCompletion;
   // REPL
