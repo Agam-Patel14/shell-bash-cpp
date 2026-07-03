@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <map>
 
 struct parsedCommand {
   std::string command;
@@ -177,6 +178,7 @@ int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf; 
   std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd" , "cd" , "complete"};
+  std::map<std::string,std::string> completionsList;
 
   rl_attempted_completion_function = commandCompletion;
   // REPL
@@ -293,8 +295,16 @@ int main() {
       }
     }
     else if(input.command == "complete"){
-      if(input.args[0] == "-p"){
-        std::cout<<"complete: "<<input.args[1]<<": no completion specification"<<std::endl;
+      if(input.args.size() == 0){}
+      else if(input.args[0] == "-C"){
+        if(input.args.size()>2) completionsList[input.args[2]] = input.args[1];
+      }
+      else if(input.args[0] == "-p"){
+        if(input.args.size() == 1){}
+        else if(completionsList.find(input.args[1]) != completionsList.end()){
+          std::cout<<"complete -C '"<<completionsList[input.args[1]]<<"' "<<input.args[1]<<std::endl;
+        }
+        else std::cout<<"complete: "<<input.args[1]<<": no completion specification"<<std::endl;
       }
     }
     else if(input.command == "type"){
