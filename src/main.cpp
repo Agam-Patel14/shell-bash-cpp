@@ -100,7 +100,7 @@ bool redirectFd(int fileno , const std::string &file , bool append){
     perror("open");
     return false;
   }
-  if(dup2(fd, fileno) == -1){
+  if(dup2(fd,fileno) == -1){
     perror("dup2");
     close(fd);
     return false;
@@ -137,7 +137,7 @@ std::vector<std::string> getPathExecutables(){
 }
 
 std::vector<std::string> getAllCommands(){
-  std::vector<std::string> commands = {"echo" , "exit" , "type" , "pwd" , "cd"};
+  std::vector<std::string> commands = {"echo" , "exit" , "type" , "pwd" , "cd" , "complete"};
   std::vector<std::string> path_executables = getPathExecutables();
   commands.insert(commands.end(),path_executables.begin(),path_executables.end());
   
@@ -176,7 +176,7 @@ int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf; 
-  std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd" , "cd"};
+  std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd" , "cd" , "complete"};
 
   rl_attempted_completion_function = commandCompletion;
   // REPL
