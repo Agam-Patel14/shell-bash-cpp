@@ -442,11 +442,14 @@ int main() {
     }
     else if(input.command == "jobs"){
       checkJobs();
-      for(auto &job : jobsList){
-        if(job.running){
-          std::cout<<"["<<job.jobNumber<<"] Running                    "<<job.command<<" &"<<std::endl;
+      int numJobs=jobsList.size();
+      for(int i=0 ; i<numJobs-2 ; i++){
+        if(jobsList[i].running){
+          std::cout<<"["<<jobsList[i].jobNumber<<"] Running                    "<<jobsList[i].command<<" &"<<std::endl;
         }
       }
+      if(jobsList[numJobs-2].running) std::cout<<"["<<jobsList[numJobs-2].jobNumber<<"]- Running                    "<<jobsList[numJobs-2].command<<" &"<<std::endl;
+      if(jobsList[numJobs-1].running) std::cout<<"["<<jobsList[numJobs-1].jobNumber<<"]+ Running                    "<<jobsList[numJobs-1].command<<" &"<<std::endl;
     }
     else if(input.command == "type"){
       if(input.args.size()!=0){
