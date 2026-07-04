@@ -152,7 +152,7 @@ void History(const std::vector<std::string> &args){
     num = lines.size();
   }
   else{
-    int num = std::atoi(args[0].c_str());
+    num = std::atoi(args[0].c_str());
     if(num == 0){
       std::string nums = args[0];
       sort(nums.begin(),nums.end());
