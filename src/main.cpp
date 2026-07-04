@@ -65,7 +65,7 @@ void checkJobs(bool isJobs){
   }
 }
 
-std::vector<std::string> builtins = {"echo","type","exit","pwd","cd","complete","jobs"};
+std::vector<std::string> builtins = {"echo","type","exit","pwd","cd","complete","jobs","history"};
 
 void echo(const std::vector<std::string> &args){
   for(int i=0;i<(int)args.size();i++){
@@ -252,7 +252,7 @@ std::vector<std::string> getPathExecutables(){
 }
 
 std::vector<std::string> getAllCommands(){
-  std::vector<std::string> commands = {"echo" , "exit" , "type" , "pwd" , "cd" , "complete" , "jobs"};
+  std::vector<std::string> commands = {"echo","type","exit","pwd","cd","complete","jobs","history"};
   std::vector<std::string> path_executables = getPathExecutables();
   commands.insert(commands.end(),path_executables.begin(),path_executables.end());
   
@@ -599,6 +599,9 @@ int main() {
     }
     else if(input.command == "jobs"){
       checkJobs(true);
+    }
+    else if(input.command == "history"){
+      
     }
     else if(input.command == "type"){
       Type(input.args);
