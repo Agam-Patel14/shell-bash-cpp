@@ -246,7 +246,7 @@ char** commandCompletion(const char* text , int start , int end){
   argsc.push_back(completionsList[args[0]]);
   argsc.push_back(args[0]);
   argsc.push_back(args[args.size()-1]);
-  if(args.size() >= 3) argsc.push_back(args[args.size()-2]);
+  if(args.size() >= 2) argsc.push_back(args[args.size()-2]);
   else argsc.push_back("");
 
   std::vector<std::string> candidate = runCompleterScript(argsc,buffer,rl_point);
