@@ -595,7 +595,7 @@ int main() {
       cd(input.args,line);
     }
     else if(input.command == "complete"){
-      complete(input.args);
+      Complete(input.args);
     }
     else if(input.command == "jobs"){
       checkJobs(true);
