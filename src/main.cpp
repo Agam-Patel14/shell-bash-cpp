@@ -170,7 +170,7 @@ void History(const std::vector<std::string> &args){
     return;
   }
   
-  for(int i=0 ; i<lines.size() ; i++){
+  for(int i=lines.size()-num ; i<lines.size() ; i++){
     printf("%6d ",i+1);
     std::cout<<lines[i]<<std::endl;
   }
