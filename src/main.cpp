@@ -170,7 +170,7 @@ char* commandGenerator(const char* text , int state){
   return nullptr;
 }
 
-std::string runCompleterScript(std::vector<std::string> args){
+std::string runCompleterScript(std::vector<std::string> args , const std::string compLine , int compPoint){
   std::string scriptPath = args[0];
   int pipefd[2];
   if(pipe(pipefd) == -1){
@@ -190,6 +190,9 @@ std::string runCompleterScript(std::vector<std::string> args){
       argv.push_back(const_cast<char*>(s.c_str()));
     }
     argv.push_back(nullptr);
+    std::string compPointStr = std::to_string(compPoint);
+    setenv("COMP_LINE",compLine.c_str(),1);
+    setenv("COMP_POINT",compPointStr.c_str(),1);
     execv(scriptPath.c_str(),argv.data());
     _exit(1);
   }
@@ -243,7 +246,7 @@ char** commandCompletion(const char* text , int start , int end){
   if(args.size() >= 3) argsc.push_back(args[args.size()-2]);
   else argsc.push_back("");
 
-  std::string candidate = runCompleterScript(argsc);
+  std::string candidate = runCompleterScript(argsc,buffer,rl_point);
   if(candidate.empty()) return nullptr;
   std::string completion = candidate;
 
