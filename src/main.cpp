@@ -39,7 +39,7 @@ struct Job {
 
 std::vector<Job> jobsList;
 
-void checkJobs(){
+void checkJobs(bool isJobs){
   for(auto &job : jobsList){
     if(!job.running) continue;
     int status;
@@ -47,6 +47,22 @@ void checkJobs(){
     if(result > 0){
       job.running = false;
     }
+  }
+  if(jobsList.size()!=0){
+    int numJobs = jobsList.size();
+    for(int i=0 ; i<numJobs ; i++){
+      std::string marker = " ";
+      if(i == numJobs-1) marker = "+";
+      else if(i == numJobs-2) marker = "-";
+      if(jobsList[i].running && isJobs){
+        std::cout<<"["<<jobsList[i].jobNumber<<"]"<<marker<<"  Running                    "<<jobsList[i].command<<" &"<<std::endl;
+      }
+      else if(!jobsList[i].running){
+        std::cout<<"["<<jobsList[i].jobNumber<<"]"<<marker<<"  Done                       "<<jobsList[i].command<<std::endl;
+      }
+    }
+    jobsList.erase(std::remove_if(jobsList.begin(),jobsList.end(),
+      [](const Job &j){ return !j.running; }),jobsList.end());
   }
 }
 
@@ -441,24 +457,7 @@ int main() {
       }
     }
     else if(input.command == "jobs"){
-      checkJobs();
-      if(jobsList.size() == 0){}
-      else{
-        int numJobs = jobsList.size();
-        for(int i=0 ; i<numJobs ; i++){
-          std::string marker = " ";
-          if(i == numJobs-1) marker = "+";
-          else if(i == numJobs-2) marker = "-";
-          if(jobsList[i].running){
-            std::cout<<"["<<jobsList[i].jobNumber<<"]"<<marker<<"  Running                    "<<jobsList[i].command<<" &"<<std::endl;
-          }
-          else{
-            std::cout<<"["<<jobsList[i].jobNumber<<"]"<<marker<<"  Done                       "<<jobsList[i].command<<std::endl;
-          }
-        }
-        jobsList.erase(std::remove_if(jobsList.begin(),jobsList.end(),
-          [](const Job &j){ return !j.running; }),jobsList.end());
-      }
+      checkJobs(true);
     }
     else if(input.command == "type"){
       if(input.args.size() != 0){
@@ -527,6 +526,7 @@ int main() {
           }
           jobsList.push_back(job);
           nextJobNumber++;
+          checkJobs(false);
         }
         else{
           int status;
