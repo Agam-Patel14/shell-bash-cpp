@@ -142,7 +142,7 @@ std::vector<std::string> getPathExecutables(){
 }
 
 std::vector<std::string> getAllCommands(){
-  std::vector<std::string> commands = {"echo" , "exit" , "type" , "pwd" , "cd" , "complete" , "job"};
+  std::vector<std::string> commands = {"echo" , "exit" , "type" , "pwd" , "cd" , "complete" , "jobs"};
   std::vector<std::string> path_executables = getPathExecutables();
   commands.insert(commands.end(),path_executables.begin(),path_executables.end());
   
@@ -281,7 +281,7 @@ int main() {
   // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf; 
-  std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd" , "cd" , "complete" , "job"};
+  std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd" , "cd" , "complete" , "jobs"};
 
   rl_attempted_completion_function = commandCompletion;
   // REPL
@@ -416,8 +416,8 @@ int main() {
         }
       }
     }
-    else if(input.command == "job"){
-      
+    else if(input.command == "jobs"){
+
     }
     else if(input.command == "type"){
       if(input.args.size()!=0){
