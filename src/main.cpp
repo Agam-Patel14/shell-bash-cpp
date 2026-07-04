@@ -397,10 +397,10 @@ int main() {
   while(1){
     checkJobs(false);
     char* userInput = readline("$ ");
-    if(strlen(userInput) != 0) lines.push_back(userInput);
 
     if(!userInput) break;
     std::string line(userInput);
+    if(!line.empty()) lines.push_back(line);
     if(!line.empty()){
       add_history(userInput);
     }
