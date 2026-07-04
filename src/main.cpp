@@ -30,6 +30,26 @@ struct parsedCommand {
 std::map<std::string,std::string> completionsList;
 int nextJobNumber = 1;
 
+struct Job {
+  int jobNumber;
+  pid_t pid;
+  std::string command;
+  bool running = true;
+};
+
+std::vector<Job> jobsList;
+
+void checkJobs(){
+  for(auto &job : jobsList){
+    if(!job.running) continue;
+    int status;
+    pid_t result = waitpid(job.pid,&status,WNOHANG);
+    if(result > 0){
+      job.running = false;
+    }
+  }
+}
+
 std::vector<std::string> parseArgs(std::string &line){
   std::vector<std::string> args;
   std::string curr;
@@ -387,9 +407,7 @@ int main() {
       std::cout<<std::filesystem::current_path().string()<<std::endl;
     }
     else if(input.command == "cd"){
-      if(input.args.size() == 0){
-        // continue;
-      }
+      if(input.args.size() == 0){}
       else if(input.args.size()>2){
         std::cout<<"cd: too many arguments"<<std::endl;
       }
@@ -423,7 +441,12 @@ int main() {
       }
     }
     else if(input.command == "jobs"){
-
+      checkJobs();
+      for(auto &job : jobsList){
+        if(job.running){
+          std::cout<<"["<<job.jobNumber<<"] Running                    "<<job.command<<" &"<<std::endl;
+        }
+      }
     }
     else if(input.command == "type"){
       if(input.args.size()!=0){
@@ -483,6 +506,14 @@ int main() {
       else if(pid>0){
         if(input.background){
           std::cout<<"["<<nextJobNumber<<"] "<<pid<<std::endl;
+          Job job;
+          job.jobNumber = nextJobNumber;
+          job.pid = pid;
+          job.command = line;
+          if(job.command.size() >= 2 && job.command.substr(job.command.size()-2) == " &"){
+            job.command = job.command.substr(0,job.command.size()-2);
+          }
+          jobsList.push_back(job);
           nextJobNumber++;
         }
         else{
