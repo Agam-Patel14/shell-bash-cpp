@@ -138,6 +138,44 @@ void Complete(const std::vector<std::string> &args){
   }
 }
 
+void History(const std::vector<std::string> &args){
+  std::vector<std::string> lines;
+  HIST_ENTRY **hist = history_list();
+  if(hist){
+    for(int i=0; hist[i] != nullptr; i++){
+      lines.push_back(hist[i]->line);
+    }
+  }
+
+  int num;
+  if(args.size() == 0){
+    num = lines.size();
+  }
+  else{
+    int num = std::atoi(args[0].c_str());
+    if(num == 0){
+      std::string nums = args[0];
+      sort(nums.begin(),nums.end());
+      if(nums[0] == nums[nums.size()-1] && nums[0] == '0'){
+        num=0;
+      }
+      else{
+        std::cout<<"history: "<<args[0]<<": numeric argument required"<<std::endl;
+        return;
+      }
+    }
+  }
+  if(args.size()>1){
+    std::cout<<"history: too many arguments"<<std::endl;
+    return;
+  }
+  
+  for(int i=0 ; i<lines.size() ; i++){
+    printf("%6d ",i+1);
+    std::cout<<lines[i]<<std::endl;
+  }
+}
+
 std::vector<std::string> parseArgs(std::string &line){
   std::vector<std::string> args;
   std::string curr;
@@ -390,7 +428,6 @@ char** commandCompletion(const char* text , int start , int end){
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
-  std::vector<std::string> lines;
 
   rl_attempted_completion_function = commandCompletion;
   // REPL
@@ -400,7 +437,6 @@ int main() {
 
     if(!userInput) break;
     std::string line(userInput);
-    if(!line.empty()) lines.push_back(line);
     if(!line.empty()){
       add_history(userInput);
     }
@@ -484,6 +520,10 @@ int main() {
           }
           else if(cmd == "jobs"){
             checkJobs(true);
+            _exit(0);
+          }
+          else if(cmd == "history"){
+            History(segArgs);
             _exit(0);
           }
           else if(cmd == "type"){
@@ -603,10 +643,7 @@ int main() {
       checkJobs(true);
     }
     else if(input.command == "history"){
-      for(int i=0 ; i<lines.size() ; i++){
-        printf("%6d ",i+1);
-        std::cout<<lines[i]<<std::endl;
-      }
+      History(input.args);
     }
     else if(input.command == "type"){
       Type(input.args);
