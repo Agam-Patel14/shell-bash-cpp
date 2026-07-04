@@ -22,11 +22,13 @@ struct parsedCommand {
   bool redirectStderr = false;
   bool appendStdout = false;
   bool appendStderr = false;
+  bool background = false;
   std::string outputFile;
   std::string errorFile;
 };
 
 std::map<std::string,std::string> completionsList;
+int nextJobNumber = 1;
 
 std::vector<std::string> parseArgs(std::string &line){
   std::vector<std::string> args;
@@ -342,6 +344,10 @@ int main() {
         input.args.push_back(arguments[i]);
       }
     }
+    if(!input.args.empty() && input.args.back() == "&"){
+      input.background = true;
+      input.args.pop_back();
+    }
 
     bool isBuitin = std::find(builtins.begin(),builtins.end(),input.command)!=builtins.end();
 
@@ -475,8 +481,14 @@ int main() {
         exit(1);
       }
       else if(pid>0){
-        int status;
-        waitpid(pid,&status,0);
+        if(input.background){
+          std::cout<<"["<<nextJobNumber<<"] "<<pid<<std::endl;
+          nextJobNumber++;
+        }
+        else{
+          int status;
+          waitpid(pid,&status,0);
+        }
       }
       else{
         std::cerr<<"fork failed"<<std::endl;
