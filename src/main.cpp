@@ -390,12 +390,14 @@ char** commandCompletion(const char* text , int start , int end){
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
+  std::vector<std::string> lines;
 
   rl_attempted_completion_function = commandCompletion;
   // REPL
   while(1){
     checkJobs(false);
     char* userInput = readline("$ ");
+    if(strlen(userInput) != 0) lines.push_back(userInput);
 
     if(!userInput) break;
     std::string line(userInput);
@@ -601,7 +603,10 @@ int main() {
       checkJobs(true);
     }
     else if(input.command == "history"){
-      
+      for(int i=0 ; i<lines.size() ; i++){
+        printf("%6d ",i+1);
+        std::cout<<lines[i]<<std::endl;
+      }
     }
     else if(input.command == "type"){
       Type(input.args);
