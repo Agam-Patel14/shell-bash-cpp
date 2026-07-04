@@ -409,6 +409,12 @@ int main() {
         }
         else std::cout<<"complete: "<<input.args[1]<<": no completion specification"<<std::endl;
       }
+      else if(input.args[0] == "-r"){
+        if(input.args.size()==1){}
+        else if(completionsList.find(input.args[1]) != completionsList.end()){
+          completionsList.erase(input.args[1]);
+        }
+      }
     }
     else if(input.command == "type"){
       if(input.args.size()!=0){
