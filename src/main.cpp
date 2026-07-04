@@ -170,12 +170,12 @@ char* commandGenerator(const char* text , int state){
   return nullptr;
 }
 
-std::string runCompleterScript(std::vector<std::string> args , const std::string compLine , int compPoint){
+std::vector<std::string> runCompleterScript(std::vector<std::string> args , const std::string compLine , int compPoint){
   std::string scriptPath = args[0];
   int pipefd[2];
   if(pipe(pipefd) == -1){
     perror("pipe");
-    return "";
+    return {};
   }
 
   pid_t pid = fork();
@@ -201,7 +201,7 @@ std::string runCompleterScript(std::vector<std::string> args , const std::string
     perror("fork");
     close(pipefd[0]);
     close(pipefd[1]);
-    return "";
+    return {};
   }
 
   close(pipefd[1]);
@@ -216,13 +216,16 @@ std::string runCompleterScript(std::vector<std::string> args , const std::string
   int status = 0;
   waitpid(pid,&status,0);
   if(!WIFEXITED(status) || WEXITSTATUS(status) != 0){
-    return "";
+    return {};
   }
 
+  std::vector<std::string> candidates;
   std::stringstream ss(output);
   std::string line;
-  std::getline(ss,line);
-  return line;
+  while(std::getline(ss,line)){
+    if(!line.empty()) candidates.push_back(line);
+  }
+  return candidates;
 }
 
 char** commandCompletion(const char* text , int start , int end){
@@ -246,13 +249,31 @@ char** commandCompletion(const char* text , int start , int end){
   if(args.size() >= 3) argsc.push_back(args[args.size()-2]);
   else argsc.push_back("");
 
-  std::string candidate = runCompleterScript(argsc,buffer,rl_point);
+  std::vector<std::string> candidate = runCompleterScript(argsc,buffer,rl_point);
   if(candidate.empty()) return nullptr;
-  std::string completion = candidate;
+  std::string completion = candidate[0];
 
-  char** matches = static_cast<char**>(malloc(sizeof(char*)*2));
-  matches[0] = strdup(completion.c_str());
-  matches[1] = nullptr;
+  if(candidate.size() == 1){
+    char** matches = static_cast<char**>(malloc(sizeof(char*)*2));
+    matches[0] = strdup(completion.c_str());
+    matches[1] = nullptr;
+    return matches;
+  }
+
+  std::sort(candidate.begin(),candidate.end());
+  std::string lcp = completion;
+  for(size_t i=1 ; i<candidate.size() ; i++){
+    size_t j=0;
+    while(j<lcp.size() && j<candidate[i].size() && lcp[j]==candidate[i][j]) j++;
+    lcp = lcp.substr(0,j);
+  }
+
+  char** matches = static_cast<char**>(malloc(sizeof(char*)*(candidate.size()+2)));
+  matches[0] = strdup(lcp.c_str());
+  for(size_t i=0 ; i<candidate.size() ; i++){
+    matches[i+1] = strdup(candidate[i].c_str());
+  }
+  matches[candidate.size()+1] = nullptr;
   return matches;
 }
 
