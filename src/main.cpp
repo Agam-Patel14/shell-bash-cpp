@@ -445,18 +445,23 @@ int main() {
       if(jobsList.size() == 0){}
       else{
         int numJobs = jobsList.size();
-        for(int i=0 ; i<numJobs-2 ; i++){
+        for(int i=0 ; i<numJobs ; i++){
+          std::string marker = " ";
+          if(i == numJobs-1) marker = "+";
+          else if(i == numJobs-2) marker = "-";
           if(jobsList[i].running){
-            std::cout<<"["<<jobsList[i].jobNumber<<"]  Running                    "<<jobsList[i].command<<" &"<<std::endl;
+            std::cout<<"["<<jobsList[i].jobNumber<<"]"<<marker<<"  Running                    "<<jobsList[i].command<<" &"<<std::endl;
+          }
+          else{
+            std::cout<<"["<<jobsList[i].jobNumber<<"]"<<marker<<"  Done                       "<<jobsList[i].command<<std::endl;
           }
         }
-        if(numJobs > 1 && jobsList[numJobs-2].running) std::cout<<"["<<jobsList[numJobs-2].jobNumber<<"]- Running                    "<<jobsList[numJobs-2].command<<" &"<<std::endl;
-        if(jobsList[numJobs-1].running) std::cout<<"["<<jobsList[numJobs-1].jobNumber<<"]+ Running                    "<<jobsList[numJobs-1].command<<" &"<<std::endl;
+        jobsList.erase(std::remove_if(jobsList.begin(),jobsList.end(),
+          [](const Job &j){ return !j.running; }),jobsList.end());
       }
-      
     }
     else if(input.command == "type"){
-      if(input.args.size()!=0){
+      if(input.args.size() != 0){
         int numArgs = input.args.size();
         for(int i=0 ; i<numArgs ; i++){
           if(std::find(builtins.begin(),builtins.end(),input.args[i])!=builtins.end()){
