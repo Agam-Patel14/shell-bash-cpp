@@ -28,7 +28,6 @@ struct parsedCommand {
 };
 
 std::map<std::string,std::string> completionsList;
-int nextJobNumber = 1;
 
 struct Job {
   int jobNumber;
@@ -517,6 +516,12 @@ int main() {
       }
       else if(pid>0){
         if(input.background){
+          int nextJobNumber = 1;
+          if(!jobsList.empty()){
+            int maxNum = 0;
+            for(auto &j : jobsList) if(j.jobNumber > maxNum) maxNum = j.jobNumber;
+            nextJobNumber = maxNum + 1;
+          }
           std::cout<<"["<<nextJobNumber<<"] "<<pid<<std::endl;
           Job job;
           job.jobNumber = nextJobNumber;
@@ -526,7 +531,6 @@ int main() {
             job.command = job.command.substr(0,job.command.size()-2);
           }
           jobsList.push_back(job);
-          nextJobNumber++;
         }
         else{
           int status;
