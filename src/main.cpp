@@ -170,7 +170,8 @@ char* commandGenerator(const char* text , int state){
   return nullptr;
 }
 
-std::string runCompleterScript(const std::string &scriptPath){
+std::string runCompleterScript(std::vector<std::string> args){
+  std::string scriptPath = args[0];
   int pipefd[2];
   if(pipe(pipefd) == -1){
     perror("pipe");
@@ -184,8 +185,12 @@ std::string runCompleterScript(const std::string &scriptPath){
       _exit(1);
     }
     close(pipefd[1]);
-    char* const argv[] = {const_cast<char*>(scriptPath.c_str()),nullptr};
-    execv(scriptPath.c_str(),argv);
+    std::vector<char*> argv;
+    for(auto &s : args){
+      argv.push_back(const_cast<char*>(s.c_str()));
+    }
+    argv.push_back(nullptr);
+    execv(scriptPath.c_str(),argv.data());
     _exit(1);
   }
 
@@ -231,7 +236,14 @@ char** commandCompletion(const char* text , int start , int end){
   if(args.empty()) return nullptr;
   if(completionsList.find(args[0]) == completionsList.end()) return nullptr;
 
-  std::string candidate = runCompleterScript(completionsList[args[0]]);
+  std::vector<std::string> argsc;
+  argsc.push_back(completionsList[args[0]]);
+  argsc.push_back(args[0]);
+  argsc.push_back(args[args.size()-1]);
+  if(args.size() >= 3) argsc.push_back(args[args.size()-2]);
+  else argsc.push_back("");
+
+  std::string candidate = runCompleterScript(argsc);
   if(candidate.empty()) return nullptr;
   std::string completion = candidate;
 
