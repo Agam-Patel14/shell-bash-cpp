@@ -343,6 +343,77 @@ int main() {
     if(arguments.empty()){
       continue;
     }
+
+    bool hasPipe = false;
+    for(auto &a : arguments) if(a == "|"){
+      hasPipe = true;
+      break;
+    }
+
+    if(hasPipe){
+      std::vector<std::vector<std::string>> segments;
+      std::vector<std::string> curr;
+      for(auto &a : arguments){
+        if(a == "|"){
+          if(!curr.empty()) segments.push_back(curr);
+          curr.clear();
+        }
+        else{
+          curr.push_back(a);
+        }
+      }
+      if(!curr.empty()) segments.push_back(curr);
+
+      int numSegments = segments.size();
+      std::vector<int> pipefds(2*(numSegments-1));
+      for(int i=0;i<numSegments-1;i++){
+        if(pipe(&pipefds[2*i]) == -1){
+          perror("pipe");
+          break;
+        }
+      }
+
+      std::vector<pid_t> pids;
+      for(int i=0 ; i<numSegments ; i++){
+        pid_t pid = fork();
+        if(pid == 0){
+          if(i > 0){
+            if(dup2(pipefds[2*(i-1)],STDIN_FILENO) == -1){
+              perror("dup2");
+              _exit(1);
+            }
+          }
+          if(i < numSegments-1){
+            if(dup2(pipefds[2*i+1],STDOUT_FILENO) == -1){
+              perror("dup2");
+              _exit(1);
+            }
+          }
+          for(int j=0 ; j<(int)pipefds.size() ; j++) close(pipefds[j]);
+
+          std::vector<const char*> argv;
+          for(auto &s : segments[i]) argv.push_back(s.c_str());
+          argv.push_back(nullptr);
+          execvp(argv[0],const_cast<char**>(argv.data()));
+          std::cerr<<segments[i][0]<<": not found"<<std::endl;
+          _exit(1);
+        }
+        else if(pid > 0){
+          pids.push_back(pid);
+        }
+        else{
+          perror("fork");
+        }
+      }
+
+      for(int j=0 ; j<(int)pipefds.size() ; j++) close(pipefds[j]);
+
+      for(auto p : pids){
+        int status;
+        waitpid(p,&status,0);
+      }
+      continue;
+    }
     parsedCommand input;
     input.command = arguments[0];
     for(int i=1 ; i<arguments.size() ; i++){
