@@ -442,7 +442,7 @@ int main() {
     }
     else if(input.command == "jobs"){
       checkJobs();
-      if(jobsList.size() == 0){};
+      if(jobsList.size() == 0){}
       else{
         int numJobs = jobsList.size();
         for(int i=0 ; i<numJobs-2 ; i++){
