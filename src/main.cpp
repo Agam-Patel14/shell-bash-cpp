@@ -324,6 +324,7 @@ int main() {
   rl_attempted_completion_function = commandCompletion;
   // REPL
   while(1){
+    checkJobs(false);
     char* userInput = readline("$ ");
 
     if(!userInput) break;
@@ -526,7 +527,6 @@ int main() {
           }
           jobsList.push_back(job);
           nextJobNumber++;
-          checkJobs(false);
         }
         else{
           int status;
