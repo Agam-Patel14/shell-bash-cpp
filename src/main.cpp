@@ -445,10 +445,10 @@ int main() {
       int numJobs=jobsList.size();
       for(int i=0 ; i<numJobs-2 ; i++){
         if(jobsList[i].running){
-          std::cout<<"["<<jobsList[i].jobNumber<<"] Running                    "<<jobsList[i].command<<" &"<<std::endl;
+          std::cout<<"["<<jobsList[i].jobNumber<<"]  Running                    "<<jobsList[i].command<<" &"<<std::endl;
         }
       }
-      if(jobsList[numJobs-2].running) std::cout<<"["<<jobsList[numJobs-2].jobNumber<<"]- Running                    "<<jobsList[numJobs-2].command<<" &"<<std::endl;
+      if(numJobs > 1 && jobsList[numJobs-2].running) std::cout<<"["<<jobsList[numJobs-2].jobNumber<<"]- Running                    "<<jobsList[numJobs-2].command<<" &"<<std::endl;
       if(jobsList[numJobs-1].running) std::cout<<"["<<jobsList[numJobs-1].jobNumber<<"]+ Running                    "<<jobsList[numJobs-1].command<<" &"<<std::endl;
     }
     else if(input.command == "type"){
