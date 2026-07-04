@@ -424,7 +424,7 @@ int main() {
     else if(input.command == "complete"){
       if(input.args.size() == 0){}
       else if(input.args[0] == "-C"){
-        if(input.args.size()>2) completionsList[input.args[2]] = input.args[1];
+        if(input.args.size() > 2) completionsList[input.args[2]] = input.args[1];
       }
       else if(input.args[0] == "-p"){
         if(input.args.size() == 1){}
@@ -434,7 +434,7 @@ int main() {
         else std::cout<<"complete: "<<input.args[1]<<": no completion specification"<<std::endl;
       }
       else if(input.args[0] == "-r"){
-        if(input.args.size()==1){}
+        if(input.args.size() == 1){}
         else if(completionsList.find(input.args[1]) != completionsList.end()){
           completionsList.erase(input.args[1]);
         }
@@ -442,14 +442,18 @@ int main() {
     }
     else if(input.command == "jobs"){
       checkJobs();
-      int numJobs=jobsList.size();
-      for(int i=0 ; i<numJobs-2 ; i++){
-        if(jobsList[i].running){
-          std::cout<<"["<<jobsList[i].jobNumber<<"]  Running                    "<<jobsList[i].command<<" &"<<std::endl;
+      if(jobsList.size() == 0){};
+      else{
+        int numJobs = jobsList.size();
+        for(int i=0 ; i<numJobs-2 ; i++){
+          if(jobsList[i].running){
+            std::cout<<"["<<jobsList[i].jobNumber<<"]  Running                    "<<jobsList[i].command<<" &"<<std::endl;
+          }
         }
+        if(numJobs > 1 && jobsList[numJobs-2].running) std::cout<<"["<<jobsList[numJobs-2].jobNumber<<"]- Running                    "<<jobsList[numJobs-2].command<<" &"<<std::endl;
+        if(jobsList[numJobs-1].running) std::cout<<"["<<jobsList[numJobs-1].jobNumber<<"]+ Running                    "<<jobsList[numJobs-1].command<<" &"<<std::endl;
       }
-      if(numJobs > 1 && jobsList[numJobs-2].running) std::cout<<"["<<jobsList[numJobs-2].jobNumber<<"]- Running                    "<<jobsList[numJobs-2].command<<" &"<<std::endl;
-      if(jobsList[numJobs-1].running) std::cout<<"["<<jobsList[numJobs-1].jobNumber<<"]+ Running                    "<<jobsList[numJobs-1].command<<" &"<<std::endl;
+      
     }
     else if(input.command == "type"){
       if(input.args.size()!=0){
