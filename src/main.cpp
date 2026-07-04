@@ -65,6 +65,79 @@ void checkJobs(bool isJobs){
   }
 }
 
+std::vector<std::string> builtins = {"echo","type","exit","pwd","cd","complete","jobs"};
+
+void echo(const std::vector<std::string> &args){
+  for(int i=0;i<(int)args.size();i++){
+    if(i) std::cout<<" ";
+    std::cout<<args[i];
+  }
+  std::cout<<std::endl;
+}
+
+void pwd(){
+  std::cout<<std::filesystem::current_path().string()<<std::endl;
+}
+
+void Type(const std::vector<std::string> &args){
+  for(auto &arg : args){
+    if(std::find(builtins.begin(),builtins.end(),arg)!=builtins.end()){
+      std::cout<<arg<<" is a shell builtin"<<std::endl;
+    }
+    else{
+      bool found = false;
+      char* env = std::getenv("PATH");
+      if(env){
+        std::stringstream ss(env);
+        std::string dir;
+        while(std::getline(ss,dir,':')){
+          std::string p = dir+"/"+arg;
+          if(access(p.c_str(),X_OK)==0){
+            found = true;
+            std::cout<<arg<<" is "<<p<<std::endl;
+            break;
+          }
+        }
+      }
+      if(!found) std::cout<<arg<<": not found"<<std::endl;
+    }
+  }
+}
+
+void cd(const std::vector<std::string> &args,const std::string &line){
+  if(args.size() == 0){}
+  else if(args.size()>2){
+    std::cout<<"cd: too many arguments"<<std::endl;
+  }
+  else{
+    std::string path = args[0];
+    if(path == "~") path = getenv("HOME");
+    std::error_code ec;
+    std::filesystem::current_path(path,ec);
+    if(ec) std::cout<<"cd:"<<line.substr(2)<<": No such file or directory"<<std::endl;
+  }
+}
+
+void Complete(const std::vector<std::string> &args){
+  if(args.size() == 0){}
+  else if(args[0] == "-C"){
+    if(args.size() > 2) completionsList[args[2]] = args[1];
+  }
+  else if(args[0] == "-p"){
+    if(args.size() == 1){}
+    else if(completionsList.find(args[1]) != completionsList.end()){
+      std::cout<<"complete -C '"<<completionsList[args[1]]<<"' "<<args[1]<<std::endl;
+    }
+    else std::cout<<"complete: "<<args[1]<<": no completion specification"<<std::endl;
+  }
+  else if(args[0] == "-r"){
+    if(args.size() == 1){}
+    else if(completionsList.find(args[1]) != completionsList.end()){
+      completionsList.erase(args[1]);
+    }
+  }
+}
+
 std::vector<std::string> parseArgs(std::string &line){
   std::vector<std::string> args;
   std::string curr;
@@ -315,10 +388,8 @@ char** commandCompletion(const char* text , int start , int end){
 }
 
 int main() {
-  // Flush after every std::cout / std:cerr
   std::cout << std::unitbuf;
-  std::cerr << std::unitbuf; 
-  std::vector<std::string> builtins = {"echo" , "type" , "exit" , "pwd" , "cd" , "complete" , "jobs"};
+  std::cerr << std::unitbuf;
 
   rl_attempted_completion_function = commandCompletion;
   // REPL
@@ -391,12 +462,43 @@ int main() {
           }
           for(int j=0 ; j<(int)pipefds.size() ; j++) close(pipefds[j]);
 
-          std::vector<const char*> argv;
-          for(auto &s : segments[i]) argv.push_back(s.c_str());
-          argv.push_back(nullptr);
-          execvp(argv[0],const_cast<char**>(argv.data()));
-          std::cerr<<segments[i][0]<<": not found"<<std::endl;
-          _exit(1);
+          std::string cmd = segments[i][0];
+          std::vector<std::string> segArgs(segments[i].begin()+1,segments[i].end());
+
+          if(cmd == "echo"){
+            echo(segArgs);
+            _exit(0);
+          }
+          else if(cmd == "pwd"){
+            pwd();
+            _exit(0);
+          }
+          else if(cmd == "cd"){
+            _exit(0);
+          }
+          else if(cmd == "complete"){
+            Complete(segArgs);
+            _exit(0);
+          }
+          else if(cmd == "jobs"){
+            checkJobs(true);
+            _exit(0);
+          }
+          else if(cmd == "type"){
+            Type(segArgs);
+            _exit(0);
+          }
+          else if(cmd == "exit"){
+            _exit(0);
+          }
+          else{
+            std::vector<const char*> argv;
+            for(auto &s : segments[i]) argv.push_back(s.c_str());
+            argv.push_back(nullptr);
+            execvp(argv[0],const_cast<char**>(argv.data()));
+            std::cerr<<segments[i][0]<<": not found"<<std::endl;
+            _exit(1);
+          } 
         }
         else if(pid > 0){
           pids.push_back(pid);
@@ -484,82 +586,22 @@ int main() {
       break;
     }
     else if(input.command == "echo"){
-      for(int i=0;i<input.args.size();i++){
-        if(i) std::cout<<" ";
-        std::cout<<input.args[i];
-      }
-      std::cout<<std::endl;
+      echo(input.args);
     }
     else if(input.command == "pwd"){
-      std::cout<<std::filesystem::current_path().string()<<std::endl;
+      pwd();
     }
     else if(input.command == "cd"){
-      if(input.args.size() == 0){}
-      else if(input.args.size()>2){
-        std::cout<<"cd: too many arguments"<<std::endl;
-      }
-      else{
-        std::string path = input.args[0];
-        if(path == "~"){
-          path = getenv("HOME");
-        }
-        std::error_code ec;
-        std::filesystem::current_path(path,ec);
-        if(ec) std::cout<<input.command<<":"<<line.substr(2)<<": No such file or directory"<<std::endl;
-      }
+      cd(input.args,line);
     }
     else if(input.command == "complete"){
-      if(input.args.size() == 0){}
-      else if(input.args[0] == "-C"){
-        if(input.args.size() > 2) completionsList[input.args[2]] = input.args[1];
-      }
-      else if(input.args[0] == "-p"){
-        if(input.args.size() == 1){}
-        else if(completionsList.find(input.args[1]) != completionsList.end()){
-          std::cout<<"complete -C '"<<completionsList[input.args[1]]<<"' "<<input.args[1]<<std::endl;
-        }
-        else std::cout<<"complete: "<<input.args[1]<<": no completion specification"<<std::endl;
-      }
-      else if(input.args[0] == "-r"){
-        if(input.args.size() == 1){}
-        else if(completionsList.find(input.args[1]) != completionsList.end()){
-          completionsList.erase(input.args[1]);
-        }
-      }
+      complete(input.args);
     }
     else if(input.command == "jobs"){
       checkJobs(true);
     }
     else if(input.command == "type"){
-      if(input.args.size() != 0){
-        int numArgs = input.args.size();
-        for(int i=0 ; i<numArgs ; i++){
-          if(std::find(builtins.begin(),builtins.end(),input.args[i])!=builtins.end()){
-            std::cout<<input.args[i]<<" is a shell builtin"<<std::endl;
-          }
-          else{
-            bool found = false;
-            char* env = std::getenv("PATH");
-            if(env == nullptr){
-                std::cout<<input.args[i]<<": not found"<<std::endl;
-                continue;
-            }
-            std::string path = env;
-            std::stringstream ss(path);
-            std::string dir;
-
-            while(std::getline(ss,dir,':')){
-              std::string pathStr = dir+"/"+input.args[i];
-              if(access(pathStr.c_str(),X_OK) == 0){
-                  found = true;
-                  std::cout<<input.args[i]<<" is "<<pathStr<<std::endl;
-                  break;
-              }
-            }
-            if(!found) std::cout<<input.args[i]<<": not found"<<std::endl;
-          }
-        }
-      }  
+      Type(input.args);
     }
     else{
       std::vector<const char*> argsc;
