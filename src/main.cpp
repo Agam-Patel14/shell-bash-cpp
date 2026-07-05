@@ -276,23 +276,35 @@ std::vector<std::string> parseArgs(std::string &line){
     char c=line[ix];
     if(c == ' ' && !curr.empty()){
       int ix = 0;
-      std::string temp = curr,key;
+      std::string temp = curr;
       curr="";
-      while(ix<temp.size() && temp[ix] != '$'){
-        curr.push_back(temp[ix]);
-        ix++;
-      }
-      ix++;
       while(ix<temp.size()){
-        key.push_back(temp[ix]);
-        ix++;
-      }
-      if(!key.empty() && variables.find(key) != variables.end()){
-        for(char &c : variables[key]){
-          curr.push_back(c);
+        if(temp[ix] == '$' && ix+1<temp.size()){
+          ix++;
+          std::string key;
+          if(temp[ix] == '{'){
+            ix++;
+            while(ix < temp.size() && temp[ix] != '}'){
+              key.push_back(temp[ix]);
+              ix++;
+            }
+            if(ix < temp.size()) ix++;
+          }
+          else{
+            while(ix<temp.size() && (key[0] == 95 || (key[0]>=97 && key[0]<=122) || (key[0]>=65 && key[0]<=90))){
+              key.push_back(temp[ix]);
+              ix++;
+            }
+          }
+          if(!key.empty() && variables.find(key) != variables.end()){
+            curr += variables[key];
+          }
+        }
+        else{
+          curr.push_back(temp[ix]);
+          ix++;
         }
       }
-
       args.push_back(curr);
       curr="";
       ix++;
@@ -346,20 +358,33 @@ std::vector<std::string> parseArgs(std::string &line){
 
   if(!curr.empty()){
     int ix = 0;
-    std::string temp = curr,key;
+    std::string temp = curr;
     curr="";
-    while(ix<temp.size() && temp[ix] != '$'){
-      curr.push_back(temp[ix]);
-      ix++;
-    }
-    ix++;
     while(ix<temp.size()){
-      key.push_back(temp[ix]);
-      ix++;
-    }
-    if(!key.empty() && variables.find(key) != variables.end()){
-      for(char &c : variables[key]){
-        curr.push_back(c);
+      if(temp[ix] == '$' && ix+1<temp.size()){
+        ix++;
+        std::string key;
+        if(temp[ix] == '{'){
+          ix++;
+          while(ix < temp.size() && temp[ix] != '}'){
+            key.push_back(temp[ix]);
+            ix++;
+          }
+          if(ix < temp.size()) ix++;
+        }
+        else{
+          while(ix<temp.size() && (isalnum(temp[ix]) || temp[ix]=='_')){
+            key.push_back(temp[ix]);
+            ix++;
+          }
+        }
+        if(!key.empty() && variables.find(key) != variables.end()){
+          curr += variables[key];
+        }
+      }
+      else{
+        curr.push_back(temp[ix]);
+        ix++;
       }
     }
     args.push_back(curr);
