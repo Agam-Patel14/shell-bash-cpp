@@ -275,6 +275,10 @@ std::vector<std::string> parseArgs(std::string &line){
   while(ix<n){
     char c=line[ix];
     if(c == ' ' && !curr.empty()){
+      if(curr[0] == '$'){
+        std::string key = curr.substr(1);
+        if(variables.find(key) != variables.end()) curr = variables[curr.substr(1)];
+      }
       args.push_back(curr);
       curr="";
       ix++;
@@ -327,6 +331,10 @@ std::vector<std::string> parseArgs(std::string &line){
   }
 
   if(!curr.empty()){
+    if(curr[0] == '$'){
+      std::string key = curr.substr(1);
+      if(variables.find(key) != variables.end()) curr = variables[curr.substr(1)];
+    }
     args.push_back(curr);
     curr="";
   }
