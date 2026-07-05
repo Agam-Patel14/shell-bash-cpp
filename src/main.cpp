@@ -253,6 +253,16 @@ void Declare(const std::vector<std::string> &args){
       value.push_back(args[0][ix]);
       ix++;
     }
+    if(key.size()==0 || !(key[0] == 95 || (key[0]>=97 && key[0]<=122) || (key[0]>=65 && key[0]<=90))){
+      std::cout<<"declare: `"<<args[0]<<"': not a valid identifier"<<std::endl;
+      return;
+    }
+    for(char &c : key){
+      if(!(key[0] == 95 || (key[0]>=97 && key[0]<=122) || (key[0]>=65 && key[0]<=90) || (key[0]>=48 && key[0]<=57))){
+        std::cout<<"declare: `"<<args[0]<<"': not a valid identifier"<<std::endl;
+        return;
+      }
+    }
     variables[key]=value;
   }
 }
