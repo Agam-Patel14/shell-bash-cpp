@@ -14,6 +14,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <map>
+#include <fstream>
 
 struct parsedCommand {
   std::string command;
@@ -138,41 +139,94 @@ void Complete(const std::vector<std::string> &args){
   }
 }
 
-void History(const std::vector<std::string> &args){
-  std::vector<std::string> lines;
-  HIST_ENTRY **hist = history_list();
-  if(hist){
-    for(int i=0; hist[i] != nullptr; i++){
-      lines.push_back(hist[i]->line);
-    }
-  }
+std::string getHistoryFile(){
+  char* hf = std::getenv("HISTFILE");
+  if(hf) return std::string(hf);
+  char* home = std::getenv("HOME");
+  if(home) return std::string(home) + "/.bash_history";
+  return ".bash_history";
+}
 
-  int num;
-  if(args.size() == 0){
-    num = lines.size();
+int historyLinesRead = 0;
+int sessionStartOffset = 0;
+
+void History(const std::vector<std::string> &args){
+  std::string histFile = getHistoryFile();
+  if(!args.empty() && args[0][0] == '-'){
+    std::string flag = args[0];
+    if(flag == "-c"){
+      clear_history();
+      sessionStartOffset = 0;
+      return;
+    }
+    else if(flag == "-w"){
+      write_history(histFile.c_str());
+      return;
+    }
+    else if(flag == "-a"){
+      int total = history_length;
+      int newEntries = total-sessionStartOffset;
+      if(newEntries > 0){
+        append_history(newEntries,histFile.c_str());
+        sessionStartOffset = total;
+      }
+      return;
+    }
+    else if(flag == "-n"){
+      read_history_range(histFile.c_str(),historyLinesRead,-1);
+      std::ifstream hfile(histFile);
+      int count = 0;
+      std::string tmp;
+      while(std::getline(hfile,tmp)) count++;
+      historyLinesRead = count;
+      return;
+    }
+    else if(flag == "-r"){
+      read_history(histFile.c_str());
+      std::ifstream hfile(histFile);
+      int count = 0;
+      std::string tmp;
+      while(std::getline(hfile,tmp)) count++;
+      historyLinesRead = count;
+      return;
+    }
   }
   else{
-    num = std::atoi(args[0].c_str());
-    if(num == 0){
-      std::string nums = args[0];
-      sort(nums.begin(),nums.end());
-      if(nums[0] == nums[nums.size()-1] && nums[0] == '0'){
-        num=0;
-      }
-      else{
-        std::cout<<"history: "<<args[0]<<": numeric argument required"<<std::endl;
-        return;
+    std::vector<std::string> lines;
+    HIST_ENTRY **hist = history_list();
+    if(hist){
+      for(int i=0; hist[i] != nullptr; i++){
+        lines.push_back(hist[i]->line);
       }
     }
-  }
-  if(args.size()>1){
-    std::cout<<"history: too many arguments"<<std::endl;
-    return;
-  }
-  
-  for(int i=lines.size()-num ; i<lines.size() ; i++){
-    printf("%6d ",i+1);
-    std::cout<<lines[i]<<std::endl;
+
+    int num;
+    if(args.size() == 0){
+      num = lines.size();
+    }
+    else{
+      num = std::atoi(args[0].c_str());
+      if(num == 0){
+        std::string nums = args[0];
+        sort(nums.begin(),nums.end());
+        if(nums[0] == nums[nums.size()-1] && nums[0] == '0'){
+          num=0;
+        }
+        else{
+          std::cout<<"history: "<<args[0]<<": numeric argument required"<<std::endl;
+          return;
+        }
+      }
+    }
+    if(args.size()>1){
+      std::cout<<"history: too many arguments"<<std::endl;
+      return;
+    }
+
+    for(int i=(int)lines.size()-num ; i<(int)lines.size() ; i++){
+      printf("%6d ",i+1);
+      std::cout<<lines[i]<<std::endl;
+    }
   }
 }
 
@@ -428,6 +482,7 @@ char** commandCompletion(const char* text , int start , int end){
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
+  sessionStartOffset = history_length;
 
   rl_attempted_completion_function = commandCompletion;
   // REPL
