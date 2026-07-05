@@ -291,7 +291,7 @@ std::vector<std::string> parseArgs(std::string &line){
             if(ix < temp.size()) ix++;
           }
           else{
-            while(ix<temp.size() && (key[0] == 95 || (key[0]>=97 && key[0]<=122) || (key[0]>=65 && key[0]<=90))){
+            while(ix<temp.size() && (temp[ix] == 95 || (temp[ix]>=97 && temp[ix]<=122) || (temp[ix]>=65 && temp[ix]<=90))){
               key.push_back(temp[ix]);
               ix++;
             }
