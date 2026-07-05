@@ -232,7 +232,12 @@ void History(const std::vector<std::string> &args){
 }
 
 void Declare(const std::vector<std::string> &args){
-
+  if(args.empty()) return;
+  if(args[0] == "-p"){
+    if(args.size() >= 2){
+      std::cout<<"declare: "<<args[1]<<": not found"<<std::endl;
+    }
+  }
 }
 
 std::vector<std::string> parseArgs(std::string &line){
