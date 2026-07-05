@@ -483,6 +483,9 @@ char** commandCompletion(const char* text , int start , int end){
 int main() {
   std::cout << std::unitbuf;
   std::cerr << std::unitbuf;
+
+  std::string histFile = getHistoryFile();
+  read_history(histFile.c_str());
   sessionStartOffset = history_length;
 
   rl_attempted_completion_function = commandCompletion;
