@@ -291,7 +291,7 @@ std::vector<std::string> parseArgs(std::string &line){
             if(ix < temp.size()) ix++;
           }
           else{
-            while(ix<temp.size() && (temp[ix] == 95 || (temp[ix]>=97 && temp[ix]<=122) || (temp[ix]>=65 && temp[ix]<=90) || (c>=48 && c<=57))){
+            while(ix<temp.size() && (temp[ix] == 95 || (temp[ix]>=97 && temp[ix]<=122) || (temp[ix]>=65 && temp[ix]<=90) || (temp[ix]>=48 && temp[ix]<=57))){
               key.push_back(temp[ix]);
               ix++;
             }
@@ -373,7 +373,7 @@ std::vector<std::string> parseArgs(std::string &line){
           if(ix < temp.size()) ix++;
         }
         else{
-          while(ix<temp.size() && (temp[ix] == 95 || (temp[ix]>=97 && temp[ix]<=122) || (temp[ix]>=65 && temp[ix]<=90) || (c>=48 && c<=57))){
+          while(ix<temp.size() && (temp[ix] == 95 || (temp[ix]>=97 && temp[ix]<=122) || (temp[ix]>=65 && temp[ix]<=90) || (temp[ix]>=48 && temp[ix]<=57))){
             key.push_back(temp[ix]);
             ix++;
           }
