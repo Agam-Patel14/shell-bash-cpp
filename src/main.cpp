@@ -373,7 +373,7 @@ std::vector<std::string> parseArgs(std::string &line){
           if(ix < temp.size()) ix++;
         }
         else{
-          while(ix<temp.size() && (isalnum(temp[ix]) || temp[ix]=='_')){
+          while(ix<temp.size() && (temp[ix] == 95 || (temp[ix]>=97 && temp[ix]<=122) || (temp[ix]>=65 && temp[ix]<=90))){
             key.push_back(temp[ix]);
             ix++;
           }
