@@ -773,5 +773,8 @@ int main() {
     }
 
   }
-  write_history(histFile.c_str());
+  int newEntries = history_length - sessionStartOffset;
+  if(newEntries > 0){
+    append_history(newEntries,histFile.c_str());
+  }
 }
