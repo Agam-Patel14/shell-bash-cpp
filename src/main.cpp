@@ -305,7 +305,7 @@ std::vector<std::string> parseArgs(std::string &line){
           ix++;
         }
       }
-      args.push_back(curr);
+      if(!curr.empty()) args.push_back(curr);
       curr="";
       ix++;
       continue;
@@ -387,7 +387,7 @@ std::vector<std::string> parseArgs(std::string &line){
         ix++;
       }
     }
-    args.push_back(curr);
+    if(!curr.empty()) args.push_back(curr);
     curr="";
   }
 
