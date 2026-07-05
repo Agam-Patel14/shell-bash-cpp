@@ -29,6 +29,8 @@ struct parsedCommand {
 };
 
 std::map<std::string,std::string> completionsList;
+std::map<std::string,std::string> variables;
+std::vector<std::string> builtins = {"echo","type","exit","pwd","cd","complete","jobs","history","declare"};
 
 struct Job {
   int jobNumber;
@@ -65,8 +67,6 @@ void checkJobs(bool isJobs){
       [](const Job &j){ return !j.running; }),jobsList.end());
   }
 }
-
-std::vector<std::string> builtins = {"echo","type","exit","pwd","cd","complete","jobs","history","declare"};
 
 void echo(const std::vector<std::string> &args){
   for(int i=0;i<(int)args.size();i++){
@@ -235,8 +235,25 @@ void Declare(const std::vector<std::string> &args){
   if(args.empty()) return;
   if(args[0] == "-p"){
     if(args.size() >= 2){
-      std::cout<<"declare: "<<args[1]<<": not found"<<std::endl;
+      if(variables.find(args[1]) != variables.end()){
+        std::cout<<"declare -- "<<args[1]<<"=\""<<variables[args[1]]<<"\""<<std::endl;
+      }
+      else std::cout<<"declare: "<<args[1]<<": not found"<<std::endl;
     }
+  }
+  else{
+    std::string key,value;
+    int ix=0;
+    while(ix < args[0].size() && args[0][ix] != '='){
+      key.push_back(args[0][ix]);
+      ix++;
+    }
+    ix++;
+    while(ix<args[0].size()){
+      value.push_back(args[0][ix]);
+      ix++;
+    }
+    variables[key]=value;
   }
 }
 
