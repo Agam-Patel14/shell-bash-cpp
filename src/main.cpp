@@ -771,5 +771,13 @@ int main() {
       }
       close(savederr);
     }
+
+  }
+  write_history(histFile.c_str());
+  int total = history_length;
+  int newEntries = total-sessionStartOffset;
+  if(newEntries > 0){
+    append_history(newEntries,histFile.c_str());
+    sessionStartOffset = total;
   }
 }
