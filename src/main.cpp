@@ -258,7 +258,7 @@ void Declare(const std::vector<std::string> &args){
       return;
     }
     for(char &c : key){
-      if(!(key[0] == 95 || (key[0]>=97 && key[0]<=122) || (key[0]>=65 && key[0]<=90) || (key[0]>=48 && key[0]<=57))){
+      if(!(c == 95 || (c>=97 && c<=122) || (c>=65 && c<=90) || (c>=48 && c<=57))){
         std::cout<<"declare: `"<<args[0]<<"': not a valid identifier"<<std::endl;
         return;
       }
