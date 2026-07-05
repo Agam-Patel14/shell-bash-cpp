@@ -66,7 +66,7 @@ void checkJobs(bool isJobs){
   }
 }
 
-std::vector<std::string> builtins = {"echo","type","exit","pwd","cd","complete","jobs","history"};
+std::vector<std::string> builtins = {"echo","type","exit","pwd","cd","complete","jobs","history","declare"};
 
 void echo(const std::vector<std::string> &args){
   for(int i=0;i<(int)args.size();i++){
@@ -231,6 +231,10 @@ void History(const std::vector<std::string> &args){
   }
 }
 
+void Declare(const std::vector<std::string> &args){
+
+}
+
 std::vector<std::string> parseArgs(std::string &line){
   std::vector<std::string> args;
   std::string curr;
@@ -345,7 +349,7 @@ std::vector<std::string> getPathExecutables(){
 }
 
 std::vector<std::string> getAllCommands(){
-  std::vector<std::string> commands = {"echo","type","exit","pwd","cd","complete","jobs","history"};
+  std::vector<std::string> commands = {"echo","type","exit","pwd","cd","complete","jobs","history","declare"};
   std::vector<std::string> path_executables = getPathExecutables();
   commands.insert(commands.end(),path_executables.begin(),path_executables.end());
   
@@ -585,6 +589,10 @@ int main() {
             History(segArgs);
             _exit(0);
           }
+          else if(cmd == "declare"){
+            Declare(segArgs);
+            _exit(0);
+          }
           else if(cmd == "type"){
             Type(segArgs);
             _exit(0);
@@ -703,6 +711,9 @@ int main() {
     }
     else if(input.command == "history"){
       History(input.args);
+    }
+    else if(input.command == "declare"){
+      Declare(input.args);
     }
     else if(input.command == "type"){
       Type(input.args);
