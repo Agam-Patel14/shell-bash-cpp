@@ -275,10 +275,24 @@ std::vector<std::string> parseArgs(std::string &line){
   while(ix<n){
     char c=line[ix];
     if(c == ' ' && !curr.empty()){
-      if(curr[0] == '$'){
-        std::string key = curr.substr(1);
-        if(variables.find(key) != variables.end()) curr = variables[curr.substr(1)];
+      int ix = 0;
+      std::string temp = curr,key;
+      curr="";
+      while(ix<temp.size() && temp[ix] != '$'){
+        curr.push_back(temp[ix]);
+        ix++;
       }
+      ix++;
+      while(ix<temp.size()){
+        key.push_back(temp[ix]);
+        ix++;
+      }
+      if(!key.empty() && variables.find(key) != variables.end()){
+        for(char &c : variables[key]){
+          curr.push_back(c);
+        }
+      }
+
       args.push_back(curr);
       curr="";
       ix++;
@@ -331,9 +345,22 @@ std::vector<std::string> parseArgs(std::string &line){
   }
 
   if(!curr.empty()){
-    if(curr[0] == '$'){
-      std::string key = curr.substr(1);
-      if(variables.find(key) != variables.end()) curr = variables[curr.substr(1)];
+    int ix = 0;
+    std::string temp = curr,key;
+    curr="";
+    while(ix<temp.size() && temp[ix] != '$'){
+      curr.push_back(temp[ix]);
+      ix++;
+    }
+    ix++;
+    while(ix<temp.size()){
+      key.push_back(temp[ix]);
+      ix++;
+    }
+    if(!key.empty() && variables.find(key) != variables.end()){
+      for(char &c : variables[key]){
+        curr.push_back(c);
+      }
     }
     args.push_back(curr);
     curr="";
