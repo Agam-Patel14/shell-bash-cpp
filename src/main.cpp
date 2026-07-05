@@ -154,27 +154,28 @@ void History(const std::vector<std::string> &args){
   std::string histFile = getHistoryFile();
   if(!args.empty() && args[0][0] == '-'){
     std::string flag = args[0];
+    std::string targetFile = (args.size() > 1) ? args[1] : histFile;
     if(flag == "-c"){
       clear_history();
       sessionStartOffset = 0;
       return;
     }
     else if(flag == "-w"){
-      write_history(histFile.c_str());
+      write_history(targetFile.c_str());
       return;
     }
     else if(flag == "-a"){
       int total = history_length;
       int newEntries = total-sessionStartOffset;
       if(newEntries > 0){
-        append_history(newEntries,histFile.c_str());
+        append_history(newEntries,targetFile.c_str());
         sessionStartOffset = total;
       }
       return;
     }
     else if(flag == "-n"){
-      read_history_range(histFile.c_str(),historyLinesRead,-1);
-      std::ifstream hfile(histFile);
+      read_history_range(targetFile.c_str(),historyLinesRead,-1);
+      std::ifstream hfile(targetFile);
       int count = 0;
       std::string tmp;
       while(std::getline(hfile,tmp)) count++;
@@ -182,8 +183,8 @@ void History(const std::vector<std::string> &args){
       return;
     }
     else if(flag == "-r"){
-      read_history(histFile.c_str());
-      std::ifstream hfile(histFile);
+      read_history(targetFile.c_str());
+      std::ifstream hfile(targetFile);
       int count = 0;
       std::string tmp;
       while(std::getline(hfile,tmp)) count++;
@@ -224,7 +225,7 @@ void History(const std::vector<std::string> &args){
     }
 
     for(int i=(int)lines.size()-num ; i<(int)lines.size() ; i++){
-      printf("%6d ",i+1);
+      printf("%5d  ",i+1);
       std::cout<<lines[i]<<std::endl;
     }
   }
